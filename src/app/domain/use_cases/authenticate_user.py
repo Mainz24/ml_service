@@ -1,4 +1,4 @@
-from src.domain.interfaces.user_repository import UserRepository
+from src.app.domain.interfaces.user_repository import UserRepository
 
 
 class AuthenticateUser:
@@ -11,4 +11,4 @@ class AuthenticateUser:
         if not user:
             return False
 
-        return self._password_hasher.check_password(password, user.password_hash)
+        return self._password_hasher.check_password(password, user.verify_password)

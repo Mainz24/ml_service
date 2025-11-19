@@ -1,0 +1,94 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    container_name: backend-app
+#    restart: unless-stopped
+    restart: no
+#    command: ["python", "main.py"]
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+    networks:
+      - ml_service
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+  web-proxy:
+    image: nginx:1.29
+    container_name: frontend-nginx
+    restart: no
+    env_file:
+      - .env
+    ports:
+      - "${WEB_PROXY1}:80"
+      - "${WEB_PROXY2}:443"
+    depends_on:
+      app:
+        condition: service_healthy
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf
+    networks:
+      - ml_service
+  postgres:
+    image: postgres:15
+    container_name: backend_bd
+    restart: on-failure
+    env_file:
+      - .env
+    volumes:
+      - ./config/postgresql.conf:/etc/postgresql/postgresql.conf
+      - .\ML\postgresql_data\data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: "${DB_USER}"
+      POSTGRES_PASS: "${DB_PASSWORD}"
+      POSTGRES_DB: "${DB_DATABASES}"
+#    healthcheck:
+#      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_PASSWORD}"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 3
+#      start_period: 10s
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - ml_service
+  rabbitmq:
+    image: rabbitmq:4.2
+    container_name: backend_rabbitmq
+    restart: on-failure
+    env_file:
+      - .env
+    ports:
+      - "${MQ_PORT1}:15672"
+      - "${MQ_PORT2}:5672"
+    volumes:
+      - ./config/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+      - .\ML\rabbitmq_data\data:/var/lib/rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASS}"
+#    healthcheck:
+#      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 3
+#      start_period: 10s
+    depends_on:
+      app:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - ml_service
+
+networks:
+  ml_service:
+    name: ml_service
+    driver: bridge

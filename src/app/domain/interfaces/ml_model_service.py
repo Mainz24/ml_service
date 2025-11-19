@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from src.domain.entities.transaction import Transaction
+from src.app.domain.entities.transaction import Transaction
 
 
 class MLModelService(ABC):

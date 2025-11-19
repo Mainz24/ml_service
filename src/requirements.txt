@@ -1,0 +1,4 @@
+dotenv
+typing
+datetime
+uuid

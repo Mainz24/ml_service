@@ -2,9 +2,10 @@ from abc import ABC, abstractmethod
 from typing import Optional
 from uuid import UUID
 
-from src.domain.entities.transaction import Transaction
+from src.app.domain.entities.transaction import Transaction
 
-class TransactionRepository(Transaction, ABC):
+
+class TransactionRepository(ABC):
     @abstractmethod
     def get_id_transaction(self, id_transaction: UUID) -> Optional[Transaction]:
         pass
