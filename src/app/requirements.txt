@@ -1,0 +1,17 @@
+# Core
+fastapi~=0.111.0
+uvicorn~=0.30.0
+pydantic~=2.8.0
+pydantic-settings~=2.3.0
+
+# Database
+sqlalchemy~=2.0.30
+asyncpg~=0.29.0
+sqlmodel~=0.0.18
+
+# Messaging
+aio_pika~=9.4.0
+
+# Crypt
+passlib[bcrypt]
+python-jose[cryptography]
