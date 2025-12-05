@@ -1,0 +1,12 @@
+# Core
+pydantic-settings~=2.3.0
+llama-cpp-python>=0.2.81
+huggingface-hub>=0.20.0
+
+# Database
+sqlalchemy~=2.0.30
+asyncpg~=0.29.0
+sqlmodel~=0.0.18
+
+# Messaging
+aio_pika~=9.4.0
