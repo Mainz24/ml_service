@@ -5,6 +5,7 @@ import logging
 
 from app.infrastructure.routes.home import home_route
 from app.infrastructure.routes.user import user_route
+from app.infrastructure.routes.html_routes import html_router
 from app.infrastructure.routes.transaction import transactions_router
 from app.infrastructure.routes.ml_routes import ml_router
 from database.database import init_db, get_database_engine, disconnect_db
@@ -26,6 +27,7 @@ def create_application() -> FastAPI:
         # title=settings.APP_NAME,
         # description=settings.APP_DESCRIPTION,
         # version=settings.API_VERSION,
+        title="ML Prediction Service",
         docs_url="/api/docs",
         redoc_url="/api/redoc"
     )
@@ -40,6 +42,7 @@ def create_application() -> FastAPI:
     )
 
     # Register routes
+    app.include_router(html_router)
     app.include_router(home_route, tags=['Home'])
     app.include_router(user_route, prefix='/api/users', tags=['Users'])
     app.include_router(transactions_router, prefix="/api/transaction", tags=["Transaction"])
@@ -55,7 +58,7 @@ async def on_startup():
         logger.info("Initializing database connection...")
         await get_database_engine()  # Подключение и создие engine/sessionmaker
         logger.info("Creating database tables...")
-        await init_db(drop_all=False)
+        await init_db(drop_all=True)
         logger.info("Application startup completed successfully")
     except Exception as e:
         logger.error(f"Startup failed: {str(e)}")

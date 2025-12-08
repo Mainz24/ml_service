@@ -1,0 +1,128 @@
+<!-- templates/balance.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Баланс и Транзакции</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        a { color: #007BFF; text-decoration: none; margin-bottom: 20px; display: inline-block; }
+        a:hover { text-decoration: underline; }
+        h2 { color: #4a148c; }
+        h3 { color: #0056b3; margin-top: 25px; }
+
+        /* Сообщения */
+        .error, .message { padding: 10px; border-radius: 5px; margin-bottom: 15px; }
+        .error { background-color: #f2dede; color: #d9534f; }
+        .message { background-color: #dff0d8; color: #3c763d; }
+
+        /* Баланс */
+        .balance-box {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(90deg, #71b7e6, #007BFF);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0,0, 0, 0.1);
+        }
+
+        /* Формы */
+        .form-group { margin-bottom: 15px; }
+        input[type="number"] {
+            padding: 10px;
+            width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            background: #9b59b6;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover { background: #8e44ad; }
+
+        /* Таблица */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tbody tr:nth-child(even) { background-color: #fafafa; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/">← Назад на главную</a>
+        <h2>Управление Балансом</h2>
+
+        {% if error %}
+            <p class="error">Ошибка: {{ error }}</p>
+        {% endif %}
+        {% if message %}
+            <p class="message">Успех: {{ message }}</p>
+        {% endif %}
+
+        <div class="balance-box">
+            Текущий баланс: {{ balance | round(2) }} кредитов
+        </div>
+
+        <h3>Пополнение счета</h3>
+        <form method="post" action="/deposit_form">
+            <div class="form-group">
+                <label for="amount_deposit">Сумма:</label>
+                <input type="number" id="amount_deposit" name="amount" step="0.01" min="0.01" required>
+                <button type="submit">Пополнить</button>
+            </div>
+        </form>
+
+        <h3>Списание кредитов</h3>
+        <form method="post" action="/withdraw_form">
+            <div class="form-group">
+                <label for="amount_withdraw">Сумма:</label>
+                <input type="number" id="amount_withdraw" name="amount" step="0.01" min="0.01" required>
+                <button type="submit">Списать</button>
+            </div>
+        </form>
+
+        <h3>История транзакций</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Дата</th>
+                    <th>Тип</th>
+                    <th>Сумма</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transaction in history %}
+                <tr>
+                    <!-- Добавлена безопасная проверка на None -->
+                    <td>{{ transaction.created_at.strftime('%Y-%m-%d %H:%M') if transaction.created_at else 'N/A' }}</td>
+                    <td>{{ transaction.type.value }}</td>
+                    <td>{{ transaction.transaction_amount | round(2) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

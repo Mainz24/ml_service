@@ -2,10 +2,14 @@ from datetime import datetime, timedelta
 from jose import jwt, JWTError
 from typing import Optional
 
-# Конфигурация (лучше вынести в .env)
-SECRET_KEY = "your-super-secret-jwt-key"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+from config.app_config import Settings
+
+
+settings = Settings()
+
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()

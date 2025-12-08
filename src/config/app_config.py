@@ -8,6 +8,12 @@ RESULT_QUEUE = 'result_queue'
 DB_QUEUE = 'db_queue'
 
 class Settings(BaseSettings):
+    # Параметры JWT
+    SECRET_KEY: str
+    ALGORITHM: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+
+    PREDICTION_COST: float
 
     # Database settings
     DB_HOST: Optional[str] = None

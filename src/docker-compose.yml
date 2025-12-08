@@ -6,7 +6,6 @@ services:
     container_name: backend-app
     restart: unless-stopped
 #    restart: no
-#    command: ["python", "/app/src/api.py"]
     env_file:
       - .env
     depends_on:
@@ -20,14 +19,10 @@ services:
 #      timeout: 5s
 #      retries: 3
 #      start_period: 10s
-    #    ports:
-#      - "8080:8080"
     environment:
       PYTHONPATH: /src
-#      WORKDIR: /app
     networks:
       - ml_service
-
   web-proxy:
     image: nginx:1.29
     container_name: backend-nginx
@@ -115,7 +110,6 @@ services:
       - hf_cache_volume:/root/.cache/huggingface/hub
     environment:
       PYTHONPATH: /src
-#      WORKDIR: /app
     deploy:
       replicas: 3
       restart_policy:
@@ -138,7 +132,6 @@ services:
       - .:/src
     environment:
       PYTHONPATH: /src
-#      WORKDIR: /app
     networks:
       - ml_service
 #  notify-worker:
@@ -157,7 +150,6 @@ services:
 #      - .:/src
 #    environment:
 #      PYTHONPATH: /src
-##      WORKDIR: /app
 #    networks:
 #      - ml_service
 

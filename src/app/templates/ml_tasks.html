@@ -1,0 +1,157 @@
+<!-- templates/ml_tasks.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Задачи</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px; /* Немного шире для таблиц */
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        a { color: #007BFF; text-decoration: none; margin-bottom: 20px; display: inline-block; }
+        a:hover { text-decoration: underline; }
+        h2 { color: #4a148c; }
+        h3 { color: #0056b3; margin-top: 25px; }
+
+        /* Сообщения */
+        .error, .message { padding: 10px; border-radius: 5px; margin-bottom: 15px; }
+        .error { background-color: #f2dede; color: #d9534f; }
+        .message { background-color: #dff0d8; color: #3c763d; }
+        .message + p { font-style: italic; color: #666; margin-top: -10px; margin-bottom: 15px; }
+
+        /* Форма отправки */
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            margin-top: 5px;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            background: #9b59b6;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        button:hover { background: #8e44ad; }
+
+        /* Таблицы */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; vertical-align: top; }
+        th { background-color: #f2f2f2; }
+        tbody tr:nth-child(even) { background-color: #fafafa; }
+        .status-completed { color: #3c763d; font-weight: bold; }
+        .status-processing { color: #007BFF; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/">← Назад на главную</a>
+        <h2>Задачи ML-модели</h2>
+
+        {% if error %}
+            <p class="error">Ошибка: {{ error }}</p>
+        {% endif %}
+        {% if message %}
+            <div class="message">
+                ✅ {{ message }}
+            </div>
+            <p>
+                Результат появится в разделе <strong>"Результаты предсказаний (Завершённые)"</strong>
+                после обработки задачи моделью (обычно 10–30 секунд).
+            </p>
+        {% endif %}
+
+        <h3>Отправить новую задачу</h3>
+        <form method="post" action="/predict_form">
+            <div class="form-group">
+                <label for="prompt_input">Входные данные (Prompt):</label>
+                <textarea id="prompt_input" name="data" rows="4" required></textarea>
+            </div>
+            <button type="submit">Отправить задачу</button>
+        </form>
+
+        <h3>История задач (Все запросы)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID Задачи</th>
+                    <th>Статус</th>
+                    <th>Время создания</th>
+                    <th>Запрос (Prompt)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Используем переменную 'tasks', переданную из FastAPI роута -->
+                {% for task in tasks %}
+                <tr>
+                    <td>{{ task.id }}</td>
+                    <td><strong>{{ task.status }}</strong></td>
+                    <!-- Безопасная проверка на None для поля даты -->
+                    <td>{{ task.created_at.strftime('%Y-%m-%d %H:%M') if task.created_at else 'N/A' }}</td>
+                    <td>{{ task.input_data[:100] }}...</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4">Задачи пока отсутствуют.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h3>Результаты предсказаний (Завершённые)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID Результата</th>
+                    <th>ID Задачи</th>
+                    <th>Время завершения</th>
+                    <th>Результат модели</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for result in results %}
+                <tr>
+                    <td>{{ result.id }}</td>
+                    <td>{{ result.task_id }}</td>
+                    <td>{{ result.completed_at.strftime('%Y-%m-%d %H:%M') if result.completed_at else 'N/A' }}</td>
+
+                    <!-- !!! ИСПРАВЛЕНИЕ В ЭТОМ МЕСТЕ !!! -->
+                    <td>
+                        <!-- Безопасная проверка: если данных нет (None), выводим "В процессе", иначе обрезаем строку -->
+                        {% if result.result_data %}
+                            {{ result.result_data[:200] }}...
+                        {% else %}
+                            В процессе
+                        {% endif %}
+                    </td>
+
+                </tr>
+                {% else %}
+                 <tr>
+                    <td colspan="4">Завершенных результатов пока нет.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

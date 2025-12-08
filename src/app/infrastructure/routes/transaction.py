@@ -4,22 +4,22 @@ from typing import List
 
 from database.database import get_session
 from app.infrastructure.models.transaction import TransactionResponseItem, TransactionInput
-from app.infrastructure.models.user import UserPublic
+from app.infrastructure.models.user import UserPublic, User
+from app.infrastructure.auth.authenticate import get_current_user_from_cookie
 from app.infrastructure.services.crud.transaction import get_transaction_history, deposit_credits, withdraw_credits
 
 
 transactions_router = APIRouter()
 
-@transactions_router.post("/deposit", response_model=UserPublic, status_code=status.HTTP_200_OK)
+@transactions_router.post("/deposit", response_model=UserPublic)
 async def api_deposit_credits(
-    user_id: int,
-    transaction_input: TransactionInput,
+    transaction_input: TransactionInput, current_user: User = Depends(get_current_user_from_cookie),
     session: AsyncSession = Depends(get_session)
 ):
     """Пополняет баланс пользователя и возвращает его обновленные данные."""
     try:
         updated_user = await deposit_credits(
-            user_id=user_id,
+            user_id=current_user.id,
             amount=transaction_input.transaction_amount,
             session=session
         )
@@ -35,16 +35,15 @@ async def api_deposit_credits(
             detail=f"An unexpected database error occurred - {e}"
         )
 
-@transactions_router.post("/withdraw", response_model=UserPublic, status_code=status.HTTP_200_OK)
+@transactions_router.post("/withdraw", response_model=UserPublic)
 async def api_withdraw_credits(
-    user_id: int,
-    transaction_input: TransactionInput,
+    transaction_input: TransactionInput, current_user: User = Depends(get_current_user_from_cookie),
     session: AsyncSession = Depends(get_session)
 ):
     """Списывает кредиты с баланса пользователя."""
     try:
         updated_user = await withdraw_credits(
-            user_id=user_id,
+            user_id=current_user.id,
             amount=transaction_input.transaction_amount,
             session=session
         )
@@ -57,22 +56,21 @@ async def api_withdraw_credits(
 
 
 @transactions_router.get(
-    "/{user_id}/transactions",
-    response_model=List[TransactionResponseItem],
-    status_code=status.HTTP_200_OK
+    "/transactions",
+    response_model=List[TransactionResponseItem]
 )
 async def api_get_transaction_history(
-        user_id: int,
+        current_user: User = Depends(get_current_user_from_cookie),
         session: AsyncSession = Depends(get_session)
 ):
     """
     Возвращает полную историю транзакций для указанного пользователя.
     """
-    history = await get_transaction_history(user_id, session)
+    history = await get_transaction_history(current_user.id, session)
 
     if not history:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No transactions found for user with ID {user_id}"
+            detail=f"No transactions found for user with ID {current_user.id}"
         )
     return history

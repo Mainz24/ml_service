@@ -56,6 +56,3 @@ class PredictionResultResponse(SQLModel):
     result_data: str | None
     created_at: datetime
     completed_at: datetime | None
-
-
-# from app.infrastructure.models.user import User

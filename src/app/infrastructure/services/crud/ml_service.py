@@ -11,9 +11,8 @@ from config.app_config import Settings, TASK_QUEUE
 
 settings = Settings()
 BROKER_URL = settings.RABBITMQ_URL
-
 # Устанавливаем цену за предсказание
-PREDICTION_COST = 5.0
+PREDICTION_COST = settings.PREDICTION_COST
 
 
 async def submit_prediction_task(

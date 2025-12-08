@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
@@ -6,6 +6,8 @@ from typing import List
 from database.database import get_session
 from app.infrastructure.services.crud.ml_service import submit_prediction_task, get_prediction_task_history, get_prediction_result_history
 from app.infrastructure.models.prediction_task import PredictionTask, PredictionTaskPublic, PredictionResultResponse
+from app.infrastructure.models.user import User
+from app.infrastructure.auth.authenticate import get_current_user_from_cookie
 
 
 ml_router = APIRouter()
@@ -16,9 +18,9 @@ class PredictionInput(BaseModel):
     data: str
 
 
-@ml_router.post("/predict", response_model=PredictionTask, status_code=status.HTTP_201_CREATED)
+@ml_router.post("/predict", response_model=PredictionTask)
 async def request_prediction(
-        prediction_input: PredictionInput,
+        prediction_input: PredictionInput, current_user: User = Depends(get_current_user_from_cookie),
         session: AsyncSession = Depends(get_session)
 ):
     """
@@ -26,7 +28,7 @@ async def request_prediction(
     списывает средства с баланса пользователя и регистрирует задачу.
     """
     task = await submit_prediction_task(
-        user_id=prediction_input.user_id,
+        user_id=current_user.id,
         input_data=prediction_input.data,
         session=session
     )
@@ -34,45 +36,44 @@ async def request_prediction(
     return task
 
 
-@ml_router.post( "/{user_id}/predictions",
-    response_model=List[PredictionTaskPublic],
-    status_code=status.HTTP_200_OK)
+@ml_router.post( "/predictions",
+    response_model=List[PredictionTaskPublic])
 async def api_get_user_tasks(
-        user_id: int,
+        current_user: User = Depends(get_current_user_from_cookie),
         session: AsyncSession = Depends(get_session)
 ):
     """
     Возвращает историю всех запросов (задач) ML-модели для указанного пользователя.
     """
-    tasks = await get_prediction_task_history(user_id, session)
+    tasks = await get_prediction_task_history(current_user.id, session)
 
     if not tasks:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No transactions found for user with ID {user_id}"
+            detail=f"No transactions found for user with ID {current_user.id}"
         )
 
     return tasks
 
 
 @ml_router.get(
-    "/{user_id}/predictions/results",
+    "/predictions/results",
     response_model=List[PredictionResultResponse],
     summary="Get a history of all prediction results"
 )
 async def get_prediction_history(
-        user_id: int,
+        current_user: User = Depends(get_current_user_from_cookie),
         session: AsyncSession = Depends(get_session)
 ):
     """
     Извлекаем список всех завершенных (или всех) задач предсказаний из базы данных.
     """
-    prediction_results = await get_prediction_result_history(user_id, session)
+    prediction_results = await get_prediction_result_history(current_user.id, session)
 
     if not prediction_results:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No predictions were found for the user with the specified ID {user_id}"
+            detail=f"No predictions were found for the user with the specified ID {current_user.id}"
         )
 
     return prediction_results
