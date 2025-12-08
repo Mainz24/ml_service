@@ -1,11 +1,13 @@
 from typing import Dict
 from fastapi import APIRouter, HTTPException
+
 from starlette.responses import JSONResponse
+
 
 home_route = APIRouter()
 
 @home_route.get(
-    "/", 
+    "/",
     response_model=Dict[str, str],
     summary="Root endpoint",
     description="Returns a welcome message"
@@ -35,7 +37,7 @@ async def health_check() -> JSONResponse:
 
     Returns:
         Dict[str, str]: Health status message
-    
+
     Raises:
         HTTPException: If service is unhealthy
     """
@@ -44,7 +46,7 @@ async def health_check() -> JSONResponse:
         return JSONResponse(content={"status": "healthy"}, status_code=200)
     except Exception as e:
         raise HTTPException(
-            status_code=503, 
+            status_code=503,
             detail="Service unavailable"
         )
 

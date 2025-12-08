@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator, ConfigDict
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List, TYPE_CHECKING
 from datetime import datetime
@@ -30,7 +30,7 @@ class User(SQLModel, table=True):
         min_length=5,
         max_length=255
     )
-    password: str = Field(..., min_length=4) 
+    hashed_password: str = Field(..., alias="password")
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     # Баланс
@@ -39,31 +39,32 @@ class User(SQLModel, table=True):
     transactions: List["UserTransaction"] = Relationship(back_populates="user")
     prediction_tasks: List["PredictionTask"] = Relationship(back_populates="user")
     # Поля админа
-    is_active: bool
-    is_superuser: bool
+    is_active: bool = True
+    is_superuser: bool = False
     
     def __str__(self) -> str:
         return f"Id: {self.id}. Email: {self.email}"
 
-    def validate_email(self) -> bool:
+    @field_validator('email')
+    @classmethod
+    def validate_email(cls, v: str) -> str:
         """
         Validate email format.
-        
+
+        Args:
+            v (str): Email to validate
+
         Returns:
-            bool: True if email is valid
-        
+            str: Validated email
+
         Raises:
             ValueError: If email format is invalid
         """
-        pattern = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
-        if not pattern.match(self.email):
+        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', v):
             raise ValueError("Invalid email format")
-        return True
+        return v
 
-    class Config:
-        """Model configuration"""
-        validate_assignment = True
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
 
 
 class UserPublic(BaseModel):
@@ -73,12 +74,14 @@ class UserPublic(BaseModel):
     email: str
     credits: float
     is_active: bool
+    is_superuser: bool
     created_at: datetime
 
 class UserSignin(BaseModel):
     email: str
     password: str
 
-
-# from app.infrastructure.models.transaction import UserTransaction
-# from app.infrastructure.models.prediction_task import PredictionTask
+class UserCreate(BaseModel):
+    email: str
+    password: str          # plaintext — только для входа
+    full_name: str

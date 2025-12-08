@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.11-slim
 
 WORKDIR /src
 
@@ -16,6 +16,6 @@ RUN pip install --upgrade pip && pip install -r /src/requirements.txt
 
 EXPOSE 8080
 
-#COPY ./ /app
+#COPY ./ /src
 
 CMD ["python", "/src/app/api.py"]

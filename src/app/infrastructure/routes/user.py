@@ -1,10 +1,12 @@
 from fastapi import APIRouter, HTTPException, status, Depends
-from typing import List, Dict, Sequence
+from typing import List, Sequence, Dict
 import logging
 
 from database.database import get_session
 from app.infrastructure.models.user import User, UserSignin
 from app.infrastructure.services.crud import user as UserService
+from app.infrastructure.auth.hash_password import verify_password
+from app.infrastructure.auth.hash_password import get_password_hash
 
 
 logger = logging.getLogger(__name__)
@@ -40,10 +42,11 @@ async def signup(data: User, session=Depends(get_session)) -> Dict[str, str]:
                 detail="User with this email already exists"
             )
 
+        hashed_pw = get_password_hash(data.hashed_password)
         user = User(
             id=data.id,
             email=data.email,
-            password=data.password,
+            hashed_password=hashed_pw,
             full_name=data.full_name,
             credits=data.credits,
             is_active=data.is_active,
@@ -74,15 +77,23 @@ async def signin(data: UserSignin, session=Depends(get_session)) -> Dict[str, st
 
     Raises:
         HTTPException: If authentication fails
+        :param session:
+        :param data:
     """
     user = await UserService.get_user_by_email(data.email, session)
+
+    if not user or not user.hashed_password:  # <-- ДОБАВЛЕНА ПРОВЕРКА НА ПУСТОЙ ХЕШ
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Incorrect username or password"
+        )
+
     if user is None:
-        logger.warning(f"Login attempt with non-existent email: {data.email}")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
-    
-    if user.password != data.password:
-        logger.warning(f"Failed login attempt for user: {data.email}")
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Wrong credentials passed")
+        raise HTTPException(status_code=404, detail="User does not exist")
+
+    # ✅ Проверяем пароль через хэш
+    if not verify_password(data.password, user.hashed_password):
+        raise HTTPException(status_code=403, detail="Wrong credentials passed")
 
     return {"message": "User signed in successfully"}
 

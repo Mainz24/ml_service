@@ -11,7 +11,6 @@ from typing import Optional, TYPE_CHECKING
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    # Используется только для статического анализа типов, не вызывает циклических импортов
     from src.app.infrastructure.models.user import User
 
 class TransactionType(str, Enum):
@@ -45,6 +44,3 @@ class TransactionResponseItem(BaseModel):
 
     class Config:
         from_attributes = True
-
-
-# from app.infrastructure.models.user import User
