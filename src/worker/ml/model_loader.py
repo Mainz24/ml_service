@@ -1,6 +1,5 @@
 from llama_cpp import Llama
 from functools import lru_cache
-import os
 from huggingface_hub import utils, hf_hub_download
 
 utils.logging.set_verbosity_info()

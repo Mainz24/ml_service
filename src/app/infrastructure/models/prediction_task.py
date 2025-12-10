@@ -2,7 +2,7 @@ from uuid import UUID, uuid4
 from datetime import datetime
 from enum import Enum
 from typing import Optional, TYPE_CHECKING
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlmodel import Field, SQLModel, Relationship
 
 if TYPE_CHECKING:
@@ -45,8 +45,7 @@ class PredictionTaskPublic(BaseModel):
     created_at: datetime
     completed_at: Optional[datetime]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PredictionResultResponse(SQLModel):

@@ -130,24 +130,7 @@ async def create_admin_user(admin_user: User, session: AsyncSession) -> User:
         User: Created administrator user with ID
         :param admin_user:
         :param session:
-        :param email:
-        :param password:
     """
-    # # Проверяем пользователя с таким email
-    # existing_user = await session.execute(
-    #     select(User).where(User.email == email)
-    # )
-    # if existing_user.scalar_one_or_none():
-    #     raise ValueError(f"User with email {email} already exists.")
-    #
-    # # Создаем нового пользователя с флагом администратора
-    # admin_user = User(
-    #     email=email,
-    #     password=password,
-    #     # full_name=full_name,
-    #     is_active=True,  # Администратор по умолчанию активен
-    #     is_superuser=True,  # Ключевой флаг администратора
-    # )
 
     try:
         session.add(admin_user)
