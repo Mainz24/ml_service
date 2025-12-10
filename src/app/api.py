@@ -2,18 +2,30 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import logging
+from contextlib import asynccontextmanager
 
 from app.infrastructure.routes.home import home_route
 from app.infrastructure.routes.user import user_route
 from app.infrastructure.routes.html_routes import html_router
 from app.infrastructure.routes.transaction import transactions_router
 from app.infrastructure.routes.ml_routes import ml_router
-from database.database import init_db, get_database_engine, disconnect_db
+import database.database
 from config.app_config import get_settings
 
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Initializing database connection...")
+    await database.database.get_database_engine()
+    logger.info("Creating database tables...")
+    await database.database.init_db(drop_all=False)
+    logger.info("Application startup completed successfully")
+    yield
+    logger.info("Application shutting down, disposing database engine...")
+    await database.database.disconnect_db()
 
 def create_application() -> FastAPI:
     """
@@ -29,7 +41,8 @@ def create_application() -> FastAPI:
         # version=settings.API_VERSION,
         title="ML Prediction Service",
         docs_url="/api/docs",
-        redoc_url="/api/redoc"
+        redoc_url="/api/redoc",
+        lifespan = lifespan  # ← ИСПОЛЬЗУЕМ lifespan вместо on_event
     )
 
     # Configure CORS
@@ -52,27 +65,9 @@ def create_application() -> FastAPI:
 
 app = create_application()
 
-@app.on_event("startup")
-async def on_startup():
-    try:
-        logger.info("Initializing database connection...")
-        await get_database_engine()  # Подключение и создие engine/sessionmaker
-        logger.info("Creating database tables...")
-        await init_db(drop_all=True)
-        logger.info("Application startup completed successfully")
-    except Exception as e:
-        logger.error(f"Startup failed: {str(e)}")
-        raise
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup on application shutdown."""
-    logger.info("Application shutting down, disposing database engine...")
-    await disconnect_db() # Отключение
 
 if __name__ == '__main__':
     exclude_cache = ".cache"
-
     logging.basicConfig(level=logging.DEBUG)
     uvicorn.run(
         'api:app',
@@ -82,3 +77,4 @@ if __name__ == '__main__':
         log_level="info",
         reload_excludes = [exclude_cache]
     )
+

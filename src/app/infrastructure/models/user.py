@@ -83,5 +83,5 @@ class UserSignin(BaseModel):
 
 class UserCreate(BaseModel):
     email: str
-    password: str          # plaintext — только для входа
+    password: str
     full_name: str

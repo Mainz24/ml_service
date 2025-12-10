@@ -34,7 +34,6 @@ def set_auth_cookie(response: Response, user_email: str):
 
     # 1. Создание токена (логика бэкенда)
     access_token_expires = timedelta(minutes=30)
-    # Предполагается, что у вас есть функция create_access_token
     access_token = create_access_token(
         data={"sub": user_email},
         expires_delta=access_token_expires
@@ -45,7 +44,7 @@ def set_auth_cookie(response: Response, user_email: str):
         key="access_token",
         value=f"Bearer {access_token}",
         httponly=True,  # Куки недоступны через JavaScript (защита от XSS)
-        secure=False,  # Только по HTTPS (используйте True в продакшене, False для локальной разработки без HTTPS)
+        secure=False,  # Только по HTTPS (используется True в продакшене, False для локальной разработки без HTTPS)
         samesite="lax",  # Защита от CSRF
         max_age=30 * 60, # Время жизни куки (30 минут в секундах)
         path="/"
@@ -194,7 +193,7 @@ async def tasks_page_ui(
 @html_router.post("/predict_form", response_class=HTMLResponse) # Новый URL для обработки формы
 async def request_prediction_form(
     request: Request,
-    data: str = Form(...), # Читаем из формы, используем alias "data" для соответствия модели
+    data: str = Form(...),
     current_user: User = Depends(get_current_user_from_cookie),
     session: AsyncSession = Depends(get_session)
 ):
@@ -232,10 +231,10 @@ async def balance_page_ui(
 
 
 # --- Эндпоинт для обработки пополнения (POST-запрос из формы) ---
-@html_router.post("/deposit_form", response_class=HTMLResponse) # Новый URL для обработки формы
+@html_router.post("/deposit_form", response_class=HTMLResponse)
 async def deposit_credits_form(
     request: Request,
-    amount: float = Form(...), # Читаем из формы
+    amount: float = Form(...),
     current_user: User = Depends(get_current_user_from_cookie),
     session: AsyncSession = Depends(get_session)
 ):

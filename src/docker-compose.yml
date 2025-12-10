@@ -14,7 +14,7 @@ services:
     volumes:
       - .:/src
 #    healthcheck:
-#      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+#      tests: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
 #      interval: 10s
 #      timeout: 5s
 #      retries: 3
@@ -33,7 +33,7 @@ services:
       - "${WEB_PROXY1}:80"
       - "${WEB_PROXY2}:443"
 #    healthcheck:
-#      test: [ "CMD", "curl", "-f", "http://localhost" ]
+#      tests: [ "CMD", "curl", "-f", "http://localhost" ]
 #      interval: 10s
 #      timeout: 5s
 #      retries: 3

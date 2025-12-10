@@ -3,10 +3,11 @@ from typing import List, Sequence, Dict
 import logging
 
 from database.database import get_session
-from app.infrastructure.models.user import User, UserSignin
+from app.infrastructure.models.user import User, UserSignin, UserCreate
 from app.infrastructure.services.crud import user as UserService
 from app.infrastructure.auth.hash_password import verify_password
 from app.infrastructure.auth.hash_password import get_password_hash
+from app.infrastructure.auth.jwt_handler import create_access_token
 
 
 logger = logging.getLogger(__name__)
@@ -19,7 +20,7 @@ user_route = APIRouter()
     status_code=status.HTTP_201_CREATED,
     summary="User Registration",
     description="Register a new user with email and password")
-async def signup(data: User, session=Depends(get_session)) -> Dict[str, str]:
+async def signup(data: UserCreate, session=Depends(get_session)) -> Dict[str, str]:
     """
     Create new user account.
 
@@ -42,15 +43,15 @@ async def signup(data: User, session=Depends(get_session)) -> Dict[str, str]:
                 detail="User with this email already exists"
             )
 
-        hashed_pw = get_password_hash(data.hashed_password)
+        hashed_pw = get_password_hash(data.password)
         user = User(
-            id=data.id,
+            # id=data.id,
             email=data.email,
             hashed_password=hashed_pw,
             full_name=data.full_name,
-            credits=data.credits,
-            is_active=data.is_active,
-            is_superuser=data.is_superuser)
+            credits=0.0,        # ← значение по умолчанию
+            is_active=True,     # ← значение по умолчанию
+            is_superuser=False)  # ← значение по умолчанию
         await UserService.create_user(user, session)
         logger.info(f"New user registered: {data.email}")
         return {"message": "User successfully registered"}
@@ -95,7 +96,14 @@ async def signin(data: UserSignin, session=Depends(get_session)) -> Dict[str, st
     if not verify_password(data.password, user.hashed_password):
         raise HTTPException(status_code=403, detail="Wrong credentials passed")
 
-    return {"message": "User signed in successfully"}
+        # Устанавливаем куку
+    access_token = create_access_token(data={"sub": user.email})
+
+    return {
+        "message": "User signed in successfully",
+        "access_token": access_token,
+        "token_type": "bearer"
+    }
 
 
 @user_route.get(
