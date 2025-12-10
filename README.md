@@ -81,7 +81,6 @@ http://localhost/api/docs
 
 *   **Транзакции (`tests/test_transactions.py`):**
     *   Корректное пополнение баланса пользователя (deposit).
-    *   Корректное списание средств (withdraw) и проверка ошибки "Insufficient funds" (недостаточно средств).
 
 *   **ML-модель (`tests/test_predict.py`):**
     *   Проверка отправки задачи на предсказание.
